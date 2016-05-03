@@ -106,7 +106,7 @@ trait WireMockSpec extends WordSpec with BeforeAndAfterAll with BeforeAndAfterEa
                      url: String,
                      extraHeaders: Map[String, String] = Map(),
                      jsonBody: Option[String]): Unit = {
-    val builder = new RequestPatternBuilder(method, urlEqualTo(url))
+    val builder = new RequestPatternBuilder(method, urlPathEqualTo(new URL(url).getPath))
     extraHeaders.foreach { case (k, v) =>
       builder.withHeader(k, equalTo(v))
     }

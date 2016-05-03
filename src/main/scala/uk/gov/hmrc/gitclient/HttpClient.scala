@@ -16,19 +16,18 @@
 
 package uk.gov.hmrc.gitclient
 
-import java.util.concurrent.{Executors, ExecutorService}
+import java.util.concurrent.{ExecutorService, Executors}
 
 import com.ning.http.client.AsyncHttpClientConfig.Builder
 import play.Logger
-import play.api.libs.json.{JsValue, Reads}
-import play.api.libs.ws.{WSAuthScheme, WSRequestHolder, WSResponse, DefaultWSClientConfig}
-import play.api.libs.ws.ning.{NingWSClient, NingAsyncHttpClientConfigBuilder}
+import play.api.libs.json.{JsValue, Json, Reads}
+import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient}
+import play.api.libs.ws.{DefaultWSClientConfig, WSAuthScheme, WSRequestHolder, WSResponse}
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-class HttpClient(user: String, apiKey: String) {
-
+object WsClient {
   private val asyncBuilder: Builder = new Builder()
   private val tp: ExecutorService = Executors.newCachedThreadPool()
   asyncBuilder.setExecutorService(tp)
@@ -38,27 +37,59 @@ class HttpClient(user: String, apiKey: String) {
       config = new DefaultWSClientConfig(/*connectionTimeout = Some(120 * 1000)*/),
       builder = asyncBuilder)
 
-  private val ws = new NingWSClient(builder.build())
+  val client = new NingWSClient(builder.build())
+
+}
+
+class HttpClient(user: String, apiKey: String) {
+
+
+  val ws = WsClient.client
 
   def close() = ws.close()
 
   def get[T](url: String)(implicit ec: ExecutionContext, r: Reads[T]): Future[T] = withErrorHandling("GET", url) {
-    case _@s if s.status >= 200 && s.status < 300 =>
+    case s if s.status >= 200 && s.status < 300 =>
       Try {
         s.json.as[T]
       } match {
         case Success(a) => a
         case Failure(e) =>
-          Logger.error(s"Error paring response failed body was: ${s.body} root url : $url")
+          Log.error(s"Error paring response failed body was: ${s.body} root url : $url")
           throw e
       }
     case res =>
       throw new RuntimeException(s"Unexpected response status : ${res.status}  calling url : $url response body : ${res.body}")
   }
 
+  def delete(url: String)(implicit ec: ExecutionContext): Future[WSResponse] = {
+    withErrorHandling("DELETE", url) {
+      case rs if (rs.status >= 200 && rs.status < 300) || (rs.status == 404) => rs
+      case _@rs =>
+        val msg = s"Didn't get expected status code when writing to Github. Got status ${rs.status}: DELETE $url ${rs.body}"
+        Log.error(msg)
+        throw new RuntimeException(msg)
+    }
+  }
 
-  private def withErrorHandling[T](method: String, url: String)(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] = {
-    buildCall(method, url).execute().transform(
+
+  def post[T](url: String, body: Option[String] = None)(implicit ec: ExecutionContext, r: Reads[T]): Future[T] = {
+    postWithStringResponse(url, body).map(x =>  Json.parse(x).as[T])
+  }
+  
+  def postWithStringResponse(url: String, body: Option[String] = None)(implicit ec: ExecutionContext): Future[String] = {
+    withErrorHandling("POST", url, body.map(Json.parse)){
+        case rs if rs.status >= 200 && rs.status < 300 => rs.body
+        case _@rs =>
+          val msg = s"Didn't get expected status code when writing to Github. Got status ${rs.status}: POST $url ${rs.body}"
+          Log.error(msg)
+          throw new RuntimeException(msg)
+      }
+    }
+
+
+  private def withErrorHandling[T](method: String, url: String, body : Option[JsValue] = None)(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] = {
+    buildCall(method, url, body).execute().transform(
       f,
       _ => throw new RuntimeException(s"Error connecting  $url")
     )

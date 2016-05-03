@@ -16,13 +16,9 @@
 
 package uk.gov.hmrc.gitclient
 
-import play.Logger
-
 import scala.concurrent.ExecutionContext
 
 class GithubApiClient(gitConfig : GitApiConfig) {
-
-  val log = new Logger()
 
   val httpClient = new HttpClient(gitConfig.user, gitConfig.key)
 
@@ -33,7 +29,7 @@ class GithubApiClient(gitConfig : GitApiConfig) {
     val url: String = githubEndpoints.organisations
 
     httpClient.get[List[GhOrganisation]](url).map(result => {
-      Logger.info(s"Got ${result.length} organisations from $url")
+      Log.info(s"Got ${result.length} organisations from $url")
       result
     })
   }
@@ -43,7 +39,7 @@ class GithubApiClient(gitConfig : GitApiConfig) {
     val url: String = githubEndpoints.teamsForOrganisation(org)
 
     httpClient.get[List[GhTeam]](url).map(result => {
-      Logger.info(s"Got ${result.length} teams for $org from $url")
+      Log.info(s"Got ${result.length} teams for $org from $url")
       result
     })
   }
@@ -58,7 +54,7 @@ class GithubApiClient(gitConfig : GitApiConfig) {
   def repoContainsFolder(folderName: String, repoName: String, orgName: String)(implicit ec: ExecutionContext) = {
     val url: String = s"${githubEndpoints.repoContents(orgName, repoName)}/$folderName"
     httpClient.head(url).map(result => {
-      Logger.info(s"Got $result when checking for $folderName folder in $orgName/$repoName from $url")
+      Log.info(s"Got $result when checking for $folderName folder in $orgName/$repoName from $url")
       result == 200
     })
   }
