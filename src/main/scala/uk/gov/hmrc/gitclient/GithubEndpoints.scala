@@ -26,6 +26,8 @@ trait GithubEndpoints {
   def organisations: String
 
   def repoContents(orgName: String, repositoryName: String): String
+
+  def repoReleases(orgName: String, repositoryName: String) :String
 }
 
 class GithubApiEndpoints(val apiBaseUrl: String) extends GithubEndpoints {
@@ -37,5 +39,7 @@ class GithubApiEndpoints(val apiBaseUrl: String) extends GithubEndpoints {
   def organisations = s"${apiBaseUrl}/user/orgs"
 
   def repoContents(orgName: String, repositoryName: String) = s"${apiBaseUrl}/repos/$orgName/$repositoryName/contents"
+
+  def repoReleases(repositoryName: String, orgName: String): String = s"${apiBaseUrl}/repos/$orgName/$repositoryName/releases"
 }
 
