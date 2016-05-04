@@ -58,7 +58,7 @@ class GithubApiClient(gitConfig : GitApiConfig) {
       result == 200
     })
   }
-  
+
   def close() = httpClient.close()
 
 }
