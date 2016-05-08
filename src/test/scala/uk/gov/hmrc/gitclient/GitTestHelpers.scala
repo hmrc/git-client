@@ -66,6 +66,15 @@ object GitTestHelpers extends OsProcess{
         ), repo.path).right.map(_ => repo).right get
     }
 
+    def createTag(tagName: String) = {
+      run(
+        Array(
+          "git",
+          "tag",
+          tagName
+        ), repo.path).right.map(_ => repo).right get
+    }
+
 
     private def createFilesWithContent(filePath: String, content: String): Path = {
       val target: Path = repo.path.resolve(filePath)

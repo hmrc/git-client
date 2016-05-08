@@ -16,19 +16,15 @@
 
 package uk.gov.hmrc.gitclient
 
-import java.io.File
-import java.nio.file.{Paths, Path}
-
-import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, DateTimeFormat}
+import org.joda.time.format.DateTimeFormat
 
-
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.util.Try
 import scala.util.matching.Regex
 
 
-case class GitTag(name: String, createdAt: DateTime)
+case class GitTag(name: String, createdAt: Option[DateTime])
 
 object GitTag {
 
@@ -37,7 +33,11 @@ object GitTag {
 
   def apply(s: String): GitTag = {
     val pattern(tagName, dateString) = s
-    GitTag(tagName, DateTime.parse(dateString, iso))
+    GitTag(tagName, tagDate(dateString))
+  }
+
+  def tagDate(dateString: String): Option[DateTime] = {
+    Try(DateTime.parse(dateString, iso)).toOption
   }
 }
 

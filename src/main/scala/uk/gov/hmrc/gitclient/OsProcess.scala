@@ -42,16 +42,14 @@ trait OsProcess {
     val logger = ProcessLogger((s) => out.append(s), (e) => err.append(e))
     val exitCode = pb.!(logger)
 
-    if (exitCode != 0) {
+    if (exitCode != 0)
       Left(Failure(
         s"""
            |got exit code $exitCode from command $cmd"
            |got following errors from command $cmd \n  ${err.mkString("\n  ")}
            """.stripMargin
       ))
-    }
-
-    Right(Success(out.toList))
+    else Right(Success(out.toList))
   }
 
   def run(cmd: Array[String]): Either[Failure, Success] = {
@@ -68,14 +66,13 @@ trait OsProcess {
     val logger = ProcessLogger((s) => out.append(s), (e) => err.append(e))
     val exitCode = pb.!(logger)
 
-    if (exitCode != 0) {
+    if (exitCode != 0)
       Left(Failure(
         s"""
            |got exit code $exitCode from command $cmd"
            |got following errors from command $cmd \n  ${err.mkString("\n  ")}
            """.stripMargin
       ))
-    }
-    Right(Success(out.toList))
+    else Right(Success(out.toList))
   }
 }

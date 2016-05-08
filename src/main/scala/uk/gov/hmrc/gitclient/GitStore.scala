@@ -38,7 +38,7 @@ abstract class Repository {
 
 object Repository {
 
-  def apply(repoName: String, path: String) = {
+  def apply(repoName: String, path: String): Repository = {
     new Repository with OsProcess {
       val name: String = repoName
       val localPath: Path = Paths.get(path)
@@ -52,11 +52,11 @@ class GitStore(localStorePath: String, apiToken: String, host: String) extends O
   //val git = run("which git").head.trim
   val storePath = Paths.get(localStorePath)
 
-  def cloneRepository(repositoryName: String, owner: String)(implicit ec: ExecutionContext) = {
+  def cloneRepository(repositoryName: String, owner: String)(implicit ec: ExecutionContext): Future[Repository] = {
 
     Future {
       run(s"git clone https://$apiToken:x-oauth-basic@$host/$owner/$repositoryName.git", storePath)
-        .fold({ f => throw new RuntimeException(f.message) }, { s => Repository(repositoryName, localStorePath) })
+        .fold({ f => throw new RuntimeException(f.message) }, { s => Repository(repositoryName, storePath.resolve(repositoryName).toString) })
     }
   }
 }
