@@ -46,7 +46,7 @@ trait GitClient {
   def git: GitStore
 
   def getGitRepoTags(repoName: String, owner: String)(implicit ec: ExecutionContext) =
-    git.cloneRepository(repoName, owner).map { r => r.getTags }
+    git.cloneRepository(repoName, owner).map { repository => repository.getTags }
 }
 
 object Git {

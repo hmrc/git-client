@@ -26,7 +26,7 @@ case class Success(result:List[String]) extends Result
 case class Failure(message:String) extends Result
 
 
-trait OsProcess {
+class OsProcess {
 
   def run(cmd: String): Either[Failure, Success] = {
     run(cmd, Paths.get("."))

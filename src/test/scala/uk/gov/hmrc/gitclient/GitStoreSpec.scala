@@ -18,33 +18,52 @@ package uk.gov.hmrc.gitclient
 
 import java.nio.file.{Path, Paths}
 
+import org.mockito
+import org.mockito.Matchers.{any, anyString}
+import org.mockito.Mockito
+import org.mockito.Mockito.{when, verify}
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class GitStoreSpec extends WordSpec with Matchers with ScalaFutures {
+
+class GitStoreSpec extends WordSpec with Matchers with ScalaFutures with MockitoSugar {
+
+  val storePath: String = "/some/path"
 
   trait Setup {
+    val fileHandler = mock[FileHandler]
+    val osProcess = mock[OsProcess]
 
-    def store = new GitStore("/var/lib", "", "") {
-      override def run(cmd: String, in: Path): Either[Failure, Success] = osRun
-    }
-
-    def osRun: Either[Failure, Success]
-
+    def store = new GitStore(storePath, "token", "github.com", fileHandler, osProcess)
 
   }
 
 
   "GitStore.cloneRepository" should {
-    "clone the repository" in new Setup {
-      override val osRun = Right(Success(List()))
+    "should return repository with correct local path" in new Setup {
+
+
+      private val repoPath: Path = Paths.get(s"$storePath/random")
+      when(fileHandler.createTemDir(Paths.get(storePath))).thenReturn(repoPath)
+      when(osProcess.run(anyString(), any[Path])).thenReturn(Right(Success(List())))
 
       val repo = store.cloneRepository("test-repo", "owner").futureValue
 
-      repo.name should be ("test-repo")
-      repo.localPath should be(Paths.get("/var/lib").resolve("test-repo"))
+      repo.name should be("test-repo")
+      repo.localPath should be(Paths.get("/some/path/random").resolve("test-repo"))
+    }
+
+    "should run the correct git clone command" in new Setup {
+
+      private val repoPath: Path = Paths.get(s"$storePath/random")
+      when(fileHandler.createTemDir(Paths.get(storePath))).thenReturn(repoPath)
+      when(osProcess.run(anyString(), any[Path])).thenReturn(Right(Success(List())))
+
+      val repo = store.cloneRepository("test-repo", "owner").futureValue
+
+      verify(osProcess).run("git clone https://token:x-oauth-basic@github.com/owner/test-repo.git", repoPath)
     }
   }
-
 }
