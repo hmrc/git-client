@@ -16,28 +16,29 @@
 
 package uk.gov.hmrc.gitclient
 
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 import scala.util.matching.Regex
 
 
-case class GitTag(name: String, createdAt: Option[DateTime])
+case class GitTag(name: String, createdAt: Option[ZonedDateTime])
 
 object GitTag {
 
   val pattern: Regex = "'(.*)->(.*)'".r
-  val iso = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss Z")
+  val iso = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z")
 
   def apply(s: String): GitTag = {
     val pattern(tagName, dateString) = s
     GitTag(tagName, tagDate(dateString))
   }
 
-  def tagDate(dateString: String): Option[DateTime] = {
-    Try(DateTime.parse(dateString, iso)).toOption
+  def tagDate(dateString: String): Option[ZonedDateTime] = {
+    Try(ZonedDateTime.parse(dateString, iso)).toOption
   }
 }
 

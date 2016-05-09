@@ -33,8 +33,7 @@ private object AppDependencies {
   val compile = Seq(
     "commons-io" % "commons-io" % "2.4",
     "org.apache.httpcomponents" % "httpcore" % "4.3.2",
-    "org.apache.httpcomponents" % "httpclient" % "4.3.5",
-    "joda-time" % "joda-time" % "2.9.3"
+    "org.apache.httpcomponents" % "httpclient" % "4.3.5"
   )
 
 

@@ -17,8 +17,8 @@
 package uk.gov.hmrc.gitclient
 
 import java.nio.file.{Files, Path}
+import java.time.ZonedDateTime
 
-import org.joda.time.DateTime
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
@@ -54,7 +54,7 @@ class GitClientSpec extends WordSpec with Matchers with ScalaFutures with Defaul
 
       tags.size should be(1)
       tags.head.name should be("v1.0.0")
-      tags.head.createdAt.formatted("yyyy-MM-dd") should be(DateTime.now().formatted("yyyy-MM-dd"))
+      tags.head.createdAt.formatted("yyyy-MM-dd") should be(ZonedDateTime.now().formatted("yyyy-MM-dd"))
 
     }
   }
