@@ -17,10 +17,26 @@
 package uk.gov.hmrc.gitclient
 
 import java.nio.file.{Files, Path}
+import java.time.Duration
+import java.util.function.{Consumer, Predicate}
+
+import org.apache.commons.io.FileUtils
 
 class FileHandler {
 
-  def createTemDir(inPath : Path) : Path = Files.createTempDirectory(inPath,"hmrc-git-client")
+  def createTemDir(inPath: Path): Path = Files.createTempDirectory(inPath, "hmrc-git-client")
+
+  def deleteOldFiles(inPath: Path, olderThan: Duration) {
+
+    Files.list(inPath).filter(new Predicate[Path] {
+      override def test(t: Path): Boolean = {
+        System.currentTimeMillis() - t.toFile.lastModified() >= olderThan.toMillis
+      }
+    }).forEach(new Consumer[Path] {
+      override def accept(t: Path): Unit = FileUtils.deleteQuietly(t.toFile)
+    })
+
+  }
 
 }
 

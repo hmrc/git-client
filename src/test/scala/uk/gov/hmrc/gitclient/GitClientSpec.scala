@@ -34,10 +34,10 @@ class GitClientSpec extends WordSpec with Matchers with ScalaFutures with Defaul
 
 
   val directory: Path = Files.createTempDirectory("local-git-store")
-  val gitStore = mock[GitStore]
+  val store = mock[LocalGitStore]
 
   val client = new GitClient {
-    override def git: GitStore = gitStore
+    override def gitStore: LocalGitStore = store
   }
 
 
@@ -48,7 +48,7 @@ class GitClientSpec extends WordSpec with Matchers with ScalaFutures with Defaul
       repo.commitFiles ("eventualTags.txt")
       repo createAnnotatedTag("v1.0.0", "first tag")
 
-      when(gitStore.cloneRepository("testing-repo","owner")).thenReturn(Future.successful(Repository("testing-repo", directory.resolve("testing-repo").toString)))
+      when(store.cloneRepository("testing-repo","owner")).thenReturn(Future.successful(Repository("testing-repo", directory.resolve("testing-repo").toString)))
 
       val tags: List[GitTag] = client.getGitRepoTags("testing-repo", "owner").futureValue
 

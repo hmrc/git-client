@@ -44,15 +44,20 @@ object GitTag {
 
 trait GitClient {
 
-  def git: GitStore
+  def gitStore: LocalGitStore
 
   def getGitRepoTags(repoName: String, owner: String)(implicit ec: ExecutionContext) =
-    git.cloneRepository(repoName, owner).map { repository => repository.getTags }
+    gitStore.cloneRepository(repoName, owner).map { repository => repository.getTags }
 }
 
 object Git {
 
-  def apply(localStorePath: String, apiToken: String, gitHost: String): GitClient = new GitClient {
-    override def git: GitStore = new GitStore(localStorePath, apiToken, gitHost)
-  }
+  def apply(localStorePath: String, apiToken: String, gitHost: String, withCleanUp: Boolean = false): GitClient =
+    new GitClient {
+
+      override val gitStore =
+        if (withCleanUp) new LocalGitStore(localStorePath, apiToken, gitHost, FileHandler(), new OsProcess) with ScheduledCleanUp
+        else new LocalGitStore(localStorePath, apiToken, gitHost, FileHandler(), new OsProcess)
+
+    }
 }

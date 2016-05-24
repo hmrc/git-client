@@ -18,9 +18,10 @@ package uk.gov.hmrc.gitclient
 
 
 import java.nio.file.{Path, Paths}
+import java.time.Duration
+import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 
-import uk.gov.hmrc.gitclient.OsProcess
-
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
 
@@ -52,10 +53,10 @@ object Repository {
 
 }
 
-class GitStore(localStorePath: String, apiToken: String, host: String, fileHandler: FileHandler = FileHandler(), osProcess: OsProcess = new OsProcess) {
 
-  //val git = run("which git").head.trim
-  val storePath = Paths.get(localStorePath)
+private[gitclient] class LocalGitStore(localStorePath: String, apiToken: String, host: String, fileHandler: FileHandler, osProcess: OsProcess) {
+
+  val storePath: Path = Paths.get(localStorePath)
 
   def cloneRepository(repositoryName: String, owner: String)(implicit ec: ExecutionContext): Future[Repository] = {
 
@@ -63,7 +64,44 @@ class GitStore(localStorePath: String, apiToken: String, host: String, fileHandl
       val temDir: Path = fileHandler.createTemDir(storePath)
       osProcess.run(s"git clone https://$apiToken:x-oauth-basic@$host/$owner/$repositoryName.git", temDir)
         .fold(
-      { f => throw new RuntimeException(f.message) }, { s => Repository(repositoryName, temDir.resolve(repositoryName).toString) })
+      { _ => throw new RuntimeException(s"Error while cloning repository : $repositoryName owner : $owner") }, { s => Repository(repositoryName, temDir.resolve(repositoryName).toString) }
+      )
     }
   }
+
+  def deleteRepos(olderThan: Duration) = {
+    fileHandler.deleteOldFiles(storePath, olderThan)
+  }
+
 }
+
+
+trait ScheduledTask {
+
+  case class ExecutionConfig(initialDelay: Long, interval: Long, unit: TimeUnit)
+
+  val scheduler = new ScheduledThreadPoolExecutor(1)
+
+  def scheduledExecution[T](operation: => T)(by: => ExecutionConfig) = {
+
+    scheduler.scheduleWithFixedDelay(new Runnable {
+      override def run(): Unit = operation
+    }, by.initialDelay, by.interval, by.unit)
+
+  }
+
+}
+
+
+trait ScheduledCleanUp extends ScheduledTask {
+  self: LocalGitStore =>
+
+  def executionConfig: ExecutionConfig = new ExecutionConfig(3, 3, TimeUnit.MINUTES)
+
+  val future = {
+    scheduledExecution(deleteRepos(Duration.ofMinutes(2)))(executionConfig)
+  }
+
+}
+
+

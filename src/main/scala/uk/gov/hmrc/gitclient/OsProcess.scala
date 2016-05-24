@@ -22,11 +22,13 @@ import scala.collection.mutable.ListBuffer
 import scala.sys.process.{Process, ProcessLogger}
 
 sealed abstract class Result
-case class Success(result:List[String]) extends Result
-case class Failure(message:String) extends Result
+
+case class Success(result: List[String]) extends Result
+
+case class Failure(message: String) extends Result
 
 
-class OsProcess {
+private[gitclient] class OsProcess {
 
   def run(cmd: String): Either[Failure, Success] = {
     run(cmd, Paths.get("."))
@@ -46,7 +48,7 @@ class OsProcess {
       Left(Failure(
         s"""
            |got exit code $exitCode from command $cmd"
-           |got following errors from command $cmd \n  ${err.mkString("\n  ")}
+                                                       |got following errors from command $cmd \n  ${err.mkString("\n  ")}
            """.stripMargin
       ))
     else Right(Success(out.toList))
@@ -70,7 +72,7 @@ class OsProcess {
       Left(Failure(
         s"""
            |got exit code $exitCode from command $cmd"
-           |got following errors from command $cmd \n  ${err.mkString("\n  ")}
+                                                       |got following errors from command $cmd \n  ${err.mkString("\n  ")}
            """.stripMargin
       ))
     else Right(Success(out.toList))

@@ -17,6 +17,7 @@
 package uk.gov.hmrc.gitclient
 
 import java.nio.file.{Path, Paths}
+import java.time.Duration
 
 import org.mockito
 import org.mockito.Matchers.{any, anyString}
@@ -28,7 +29,7 @@ import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class GitStoreSpec extends WordSpec with Matchers with ScalaFutures with MockitoSugar {
+class LocalGitStoreSpec extends WordSpec with Matchers with ScalaFutures with MockitoSugar {
 
   val storePath: String = "/some/path"
 
@@ -36,13 +37,12 @@ class GitStoreSpec extends WordSpec with Matchers with ScalaFutures with Mockito
     val fileHandler = mock[FileHandler]
     val osProcess = mock[OsProcess]
 
-    def store = new GitStore(storePath, "token", "github.com", fileHandler, osProcess)
-
+    def store = new LocalGitStore(storePath, "token", "github.com", fileHandler, osProcess)
   }
 
 
-  "GitStore.cloneRepository" should {
-    "should return repository with correct local path" in new Setup {
+  "LocalGitStore.cloneRepository" should {
+    "return repository with correct local path" in new Setup {
 
 
       private val repoPath: Path = Paths.get(s"$storePath/random")
@@ -55,7 +55,7 @@ class GitStoreSpec extends WordSpec with Matchers with ScalaFutures with Mockito
       repo.localPath should be(Paths.get("/some/path/random").resolve("test-repo"))
     }
 
-    "should run the correct git clone command" in new Setup {
+    "run the correct git clone command" in new Setup {
 
       private val repoPath: Path = Paths.get(s"$storePath/random")
       when(fileHandler.createTemDir(Paths.get(storePath))).thenReturn(repoPath)
@@ -65,5 +65,16 @@ class GitStoreSpec extends WordSpec with Matchers with ScalaFutures with Mockito
 
       verify(osProcess).run("git clone https://token:x-oauth-basic@github.com/owner/test-repo.git", repoPath)
     }
+  }
+
+  "LocalGitStore.deleteRepos" should {
+    "delete repos older than the given duration" in new Setup {
+
+      store.deleteRepos(Duration.ofMinutes(5))
+
+      Mockito.verify(fileHandler).deleteOldFiles(Paths.get(storePath), Duration.ofMinutes(5))
+
+    }
+
   }
 }
