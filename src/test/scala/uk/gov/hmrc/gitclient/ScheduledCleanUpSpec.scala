@@ -41,7 +41,7 @@ class ScheduledCleanUpSpec extends WordSpec with Matchers with MockitoSugar {
 
       latch.await(30, TimeUnit.MILLISECONDS)
 
-      Mockito.verify(handler, Mockito.atLeast(2)).deleteOldFiles(path, Duration.ofMinutes(2))
+      Mockito.verify(handler, Mockito.atLeast(2)).deleteOldFiles(path, Duration.ofMinutes(5))
 
 
     }

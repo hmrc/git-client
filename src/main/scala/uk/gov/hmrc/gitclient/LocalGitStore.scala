@@ -96,10 +96,10 @@ trait ScheduledTask {
 trait ScheduledCleanUp extends ScheduledTask {
   self: LocalGitStore =>
 
-  def executionConfig: ExecutionConfig = new ExecutionConfig(3, 3, TimeUnit.MINUTES)
+  def executionConfig: ExecutionConfig = new ExecutionConfig(2, 2, TimeUnit.MINUTES)
 
   val future = {
-    scheduledExecution(deleteRepos(Duration.ofMinutes(2)))(executionConfig)
+    scheduledExecution(deleteRepos(Duration.ofMinutes(5)))(executionConfig)
   }
 
 }
