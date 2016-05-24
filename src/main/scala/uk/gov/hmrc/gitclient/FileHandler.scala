@@ -24,7 +24,7 @@ import org.apache.commons.io.FileUtils
 
 class FileHandler {
 
-  def createTemDir(inPath: Path): Path = Files.createTempDirectory(inPath, "hmrc-git-client")
+  def createTempDir(inPath: Path, prefix: String): Path = Files.createTempDirectory(inPath, prefix)
 
   def deleteOldFiles(inPath: Path, olderThan: Duration) {
 

@@ -31,34 +31,56 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class LocalGitStoreSpec extends WordSpec with Matchers with ScalaFutures with MockitoSugar {
 
-  val storePath: String = "/some/path"
+  val localPathString: String = "/some/path"
+  val localPath = Paths.get(localPathString)
 
   trait Setup {
     val fileHandler = mock[FileHandler]
     val osProcess = mock[OsProcess]
+    val storePath: Path = Paths.get("/some/random/store/path")
 
-    def store = new LocalGitStore(storePath, "token", "github.com", fileHandler, osProcess)
+    when(fileHandler.createTempDir(localPath, "git-client-store")).thenReturn(storePath)
+
+    def store = new LocalGitStore(localPathString, "token", "github.com", fileHandler, osProcess)
   }
 
 
+  "LocalGitStore" should {
+    "be initialized with a storePath as a tem directory in the passed local path" in {
+      val fileHandler = mock[FileHandler]
+
+      val returnedTempDir: Path = Paths.get("/temp/store/path")
+      when(fileHandler.createTempDir(localPath, "git-client-store")).thenReturn(returnedTempDir)
+
+      def store = new LocalGitStore(localPathString, "token", "github.com", fileHandler, null)
+
+      store.storePath shouldBe returnedTempDir
+
+
+    }
+  }
+
   "LocalGitStore.cloneRepository" should {
-    "return repository with correct local path" in new Setup {
+    "return repository in a temp directory in git store" in new Setup {
 
 
-      private val repoPath: Path = Paths.get(s"$storePath/random")
-      when(fileHandler.createTemDir(Paths.get(storePath))).thenReturn(repoPath)
+      private val repoPath: Path = storePath.resolve("random")
+
+
+      when(fileHandler.createTempDir(storePath, "test-repo")).thenReturn(repoPath)
+
       when(osProcess.run(anyString(), any[Path])).thenReturn(Right(Success(List())))
 
       val repo = store.cloneRepository("test-repo", "owner").futureValue
 
       repo.name should be("test-repo")
-      repo.localPath should be(Paths.get("/some/path/random").resolve("test-repo"))
+      repo.localPath should be(repoPath.resolve("test-repo"))
     }
 
     "run the correct git clone command" in new Setup {
 
-      private val repoPath: Path = Paths.get(s"$storePath/random")
-      when(fileHandler.createTemDir(Paths.get(storePath))).thenReturn(repoPath)
+      private val repoPath: Path = storePath.resolve("random")
+      when(fileHandler.createTempDir(store.storePath, "test-repo")).thenReturn(repoPath)
       when(osProcess.run(anyString(), any[Path])).thenReturn(Right(Success(List())))
 
       val repo = store.cloneRepository("test-repo", "owner").futureValue
@@ -72,7 +94,7 @@ class LocalGitStoreSpec extends WordSpec with Matchers with ScalaFutures with Mo
 
       store.deleteRepos(Duration.ofMinutes(5))
 
-      Mockito.verify(fileHandler).deleteOldFiles(Paths.get(storePath), Duration.ofMinutes(5))
+      Mockito.verify(fileHandler).deleteOldFiles(storePath, Duration.ofMinutes(5))
 
     }
 

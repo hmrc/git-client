@@ -20,14 +20,15 @@ import java.nio.file.{Path, Paths}
 import java.time.Duration
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-import org.mockito.Mockito
+import org.mockito
+import org.mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 
 class ScheduledCleanUpSpec extends WordSpec with Matchers with MockitoSugar {
 
-  "ScheduledExecution" should {
-    "perform operation periodically at given execution conf" in {
+  "ScheduledCleanUp" should {
+    "perform cleanup periodically at given execution conf" in {
 
       val latch = new CountDownLatch(1)
       val handler: FileHandler = mock[FileHandler]
@@ -41,7 +42,7 @@ class ScheduledCleanUpSpec extends WordSpec with Matchers with MockitoSugar {
 
       latch.await(30, TimeUnit.MILLISECONDS)
 
-      Mockito.verify(handler, Mockito.atLeast(2)).deleteOldFiles(path, Duration.ofMinutes(5))
+      Mockito.verify(handler, Mockito.atLeast(2)).deleteOldFiles(mockito.Matchers.any[Path], mockito.Matchers.eq(Duration.ofMinutes(5)))
 
 
     }

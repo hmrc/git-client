@@ -56,12 +56,12 @@ object Repository {
 
 private[gitclient] class LocalGitStore(localStorePath: String, apiToken: String, host: String, fileHandler: FileHandler, osProcess: OsProcess) {
 
-  val storePath: Path = Paths.get(localStorePath)
+  val storePath: Path = fileHandler.createTempDir(Paths.get(localStorePath), "git-client-store")
 
   def cloneRepository(repositoryName: String, owner: String)(implicit ec: ExecutionContext): Future[Repository] = {
 
     Future {
-      val temDir: Path = fileHandler.createTemDir(storePath)
+      val temDir: Path = fileHandler.createTempDir(storePath, repositoryName)
       osProcess.run(s"git clone https://$apiToken:x-oauth-basic@$host/$owner/$repositoryName.git", temDir)
         .fold(
       { _ => throw new RuntimeException(s"Error while cloning repository : $repositoryName owner : $owner") }, { s => Repository(repositoryName, temDir.resolve(repositoryName).toString) }
