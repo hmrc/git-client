@@ -53,8 +53,14 @@ object Repository {
 
 }
 
+trait GitStore {
 
-private[gitclient] class LocalGitStore(localStorePath: String, apiToken: String, host: String, fileHandler: FileHandler, osProcess: OsProcess) {
+  def cloneRepository(repositoryName: String, owner: String)(implicit ec: ExecutionContext): Future[Repository]
+  def deleteRepos(olderThan: Duration): Future[Unit]
+
+}
+
+private[gitclient] class LocalGitStore(localStorePath: String, apiToken: String, host: String, fileHandler: FileHandler, osProcess: OsProcess) extends GitStore{
 
   val storePath: Path = fileHandler.createTempDir(Paths.get(localStorePath), "git-client-store")
 
@@ -69,8 +75,8 @@ private[gitclient] class LocalGitStore(localStorePath: String, apiToken: String,
     }
   }
 
-  def deleteRepos(olderThan: Duration) = {
-    fileHandler.deleteOldFiles(storePath, olderThan)
+  def deleteRepos(olderThan: Duration): Future[Unit] = {
+    Future.successful(fileHandler.deleteOldFiles(storePath, olderThan))
   }
 
 }
@@ -94,11 +100,11 @@ trait ScheduledTask {
 
 
 trait ScheduledCleanUp extends ScheduledTask {
-  self: LocalGitStore =>
+  self: GitStore =>
 
   def executionConfig: ExecutionConfig = new ExecutionConfig(2, 2, TimeUnit.MINUTES)
 
-  val future = {
+  val scheduledFuture = {
     scheduledExecution(deleteRepos(Duration.ofMinutes(5)))(executionConfig)
   }
 

@@ -44,7 +44,7 @@ object GitTag {
 
 trait GitClient {
 
-  def gitStore: LocalGitStore
+  def gitStore: GitStore
 
   def getGitRepoTags(repoName: String, owner: String)(implicit ec: ExecutionContext) =
     gitStore.cloneRepository(repoName, owner).map { repository => repository.getTags }
