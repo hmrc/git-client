@@ -42,7 +42,9 @@ private[gitclient] class OsProcess {
     val err = ListBuffer[String]()
 
     val logger = ProcessLogger((s) => out.append(s), (e) => err.append(e))
-    val exitCode = pb.!(logger)
+    val process: Process = pb.run(logger)
+    val exitCode = process.exitValue()
+    process.destroy()
 
     if (exitCode != 0)
       Left(Failure(
@@ -66,7 +68,9 @@ private[gitclient] class OsProcess {
     val err = ListBuffer[String]()
 
     val logger = ProcessLogger((s) => out.append(s), (e) => err.append(e))
-    val exitCode = pb.!(logger)
+    val process: Process = pb.run(logger)
+    val exitCode = process.exitValue()
+    process.destroy()
 
     if (exitCode != 0)
       Left(Failure(
