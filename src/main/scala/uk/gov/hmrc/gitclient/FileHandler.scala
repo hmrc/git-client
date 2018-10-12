@@ -28,16 +28,16 @@ class FileHandler {
 
   def deleteOldFiles(inPath: Path, olderThan: Duration) {
 
-    Files.list(inPath).filter(new Predicate[Path] {
-      override def test(t: Path): Boolean = {
-        System.currentTimeMillis() - t.toFile.lastModified() >= olderThan.toMillis
-      }
-    }).forEach(new Consumer[Path] {
-      override def accept(t: Path): Unit = FileUtils.deleteQuietly(t.toFile)
-    })
-
+    Files
+      .list(inPath)
+      .filter(new Predicate[Path] {
+        override def test(t: Path): Boolean =
+          System.currentTimeMillis() - t.toFile.lastModified() >= olderThan.toMillis
+      })
+      .forEach(new Consumer[Path] {
+        override def accept(t: Path): Unit = FileUtils.deleteQuietly(t.toFile)
+      })
   }
-
 }
 
 object FileHandler {

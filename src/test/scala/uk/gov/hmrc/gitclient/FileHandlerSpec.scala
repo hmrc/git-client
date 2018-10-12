@@ -43,8 +43,6 @@ class FileHandlerSpec extends WordSpec with Matchers {
       directory1.toFile.exists() shouldBe false
       directory2.toFile.exists() shouldBe false
       directory3.toFile.exists() shouldBe true
-
     }
   }
-
 }

@@ -23,8 +23,7 @@ class GitSpec extends WordSpec with Matchers {
   "Git.apply" should {
     "create correct GitStore instance" in {
       Git("", "", "", true).gitStore.isInstanceOf[LocalGitStore with ScheduledCleanUp] should be(true)
-      Git("", "", "", false).gitStore.isInstanceOf[LocalGitStore] should be(true)
+      Git("", "", "", false).gitStore.isInstanceOf[LocalGitStore]                      should be(true)
     }
   }
-
 }

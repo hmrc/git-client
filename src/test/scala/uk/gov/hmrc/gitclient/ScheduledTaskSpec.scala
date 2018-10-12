@@ -47,9 +47,6 @@ class ScheduledTaskSpec extends WordSpec with Matchers with MockitoSugar {
       latch.await(30, TimeUnit.MILLISECONDS)
 
       Mockito.verify(dummy, Mockito.atLeast(2)).doSomeThing
-
-
     }
   }
-
 }

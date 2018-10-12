@@ -19,45 +19,44 @@ package uk.gov.hmrc.gitclient
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import scala.util.matching.Regex
-
 
 case class GitTag(name: String, createdAt: Option[ZonedDateTime])
 
 object GitTag {
 
-  val pattern: Regex = "'(.*)->(.*)'".r
-  val iso = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z")
+  val pattern: Regex         = "'(.*)->(.*)'".r
+  val iso: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z")
 
   def apply(s: String): GitTag = {
     val pattern(tagName, dateString) = s
     GitTag(tagName, tagDate(dateString))
   }
 
-  def tagDate(dateString: String): Option[ZonedDateTime] = {
+  def tagDate(dateString: String): Option[ZonedDateTime] =
     Try(ZonedDateTime.parse(dateString, iso)).toOption
-  }
 }
 
 trait GitClient {
 
   def gitStore: GitStore
 
-  def getGitRepoTags(repoName: String, owner: String)(implicit ec: ExecutionContext) =
-    gitStore.cloneRepository(repoName, owner).map { repository => repository.getTags }
+  def getGitRepoTags(repoName: String, owner: String)(implicit ec: ExecutionContext): Future[List[GitTag]] =
+    gitStore.cloneRepository(repoName, owner).map { repository =>
+      repository.getTags
+    }
 }
 
 object Git {
 
   def apply(localStorePath: String, apiToken: String, gitHost: String, withCleanUp: Boolean = false): GitClient =
     new GitClient {
-
-      override val gitStore =
-        if (withCleanUp) new LocalGitStore(localStorePath, apiToken, gitHost, FileHandler(), new OsProcess) with ScheduledCleanUp
-        else new LocalGitStore(localStorePath, apiToken, gitHost, FileHandler(), new OsProcess)
-
+      override val gitStore: LocalGitStore =
+        if (withCleanUp)
+          new LocalGitStore(localStorePath, apiToken, gitHost, FileHandler(), new OsProcess) with ScheduledCleanUp
+        else
+          new LocalGitStore(localStorePath, apiToken, gitHost, FileHandler(), new OsProcess)
     }
 }

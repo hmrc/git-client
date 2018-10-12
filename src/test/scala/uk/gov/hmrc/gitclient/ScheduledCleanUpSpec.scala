@@ -30,22 +30,19 @@ class ScheduledCleanUpSpec extends WordSpec with Matchers with MockitoSugar {
   "ScheduledCleanUp" should {
     "perform cleanup periodically at given execution conf" in {
 
-      val latch = new CountDownLatch(1)
+      val latch                = new CountDownLatch(1)
       val handler: FileHandler = mock[FileHandler]
-      val path: Path = Paths.get("some/path")
-
+      val path: Path           = Paths.get("some/path")
 
       val s = new LocalGitStore(path.toString, "", "", handler, null) with ScheduledCleanUp {
-
-        override lazy val executionConfig: ExecutionConfig = new ExecutionConfig(1, 10, TimeUnit.MILLISECONDS)
+        override lazy val executionConfig: ExecutionConfig = ExecutionConfig(1, 10, TimeUnit.MILLISECONDS)
       }
 
       latch.await(30, TimeUnit.MILLISECONDS)
 
-      Mockito.verify(handler, Mockito.atLeast(2)).deleteOldFiles(mockito.Matchers.any[Path], mockito.Matchers.eq(Duration.ofMinutes(5)))
-
-
+      Mockito
+        .verify(handler, Mockito.atLeast(2))
+        .deleteOldFiles(mockito.Matchers.any[Path], mockito.Matchers.eq(Duration.ofMinutes(5)))
     }
   }
-
 }

@@ -19,7 +19,6 @@ package uk.gov.hmrc.gitclient
 import java.nio.file.{Files, Path}
 import java.time.ZonedDateTime
 
-import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
@@ -29,34 +28,30 @@ import uk.gov.hmrc.gitclient.GitTestHelpers._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-
 class GitClientSpec extends WordSpec with Matchers with ScalaFutures with DefaultPatienceConfig with MockitoSugar {
 
-
   val directory: Path = Files.createTempDirectory("local-git-store")
-  val store = mock[LocalGitStore]
+  val store           = mock[LocalGitStore]
 
   val client = new GitClient {
     override def gitStore: LocalGitStore = store
   }
 
-
   "GitClient.getGitRepoTags" should {
     "get all tag names and tagger date" in {
 
       val repo = "testing-repo" initRepo directory
-      repo.commitFiles ("eventualTags.txt")
-      repo createAnnotatedTag("v1.0.0", "first tag")
+      repo.commitFiles("eventualTags.txt")
+      repo createAnnotatedTag ("v1.0.0", "first tag")
 
-      when(store.cloneRepository("testing-repo","owner")).thenReturn(Future.successful(Repository("testing-repo", directory.resolve("testing-repo").toString)))
+      when(store.cloneRepository("testing-repo", "owner"))
+        .thenReturn(Future.successful(Repository("testing-repo", directory.resolve("testing-repo").toString)))
 
       val tags: List[GitTag] = client.getGitRepoTags("testing-repo", "owner").futureValue
 
-      tags.size should be(1)
-      tags.head.name should be("v1.0.0")
+      tags.size                                   should be(1)
+      tags.head.name                              should be("v1.0.0")
       tags.head.createdAt.formatted("yyyy-MM-dd") should be(ZonedDateTime.now().formatted("yyyy-MM-dd"))
-
     }
   }
-
 }

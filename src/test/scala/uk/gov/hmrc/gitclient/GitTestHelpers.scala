@@ -18,63 +18,64 @@ package uk.gov.hmrc.gitclient
 
 import java.nio.file.{Files, Path}
 
-import scala.concurrent.Future
-
-import scala.concurrent.ExecutionContext.Implicits.global
-
 sealed trait Repo
 
 case class InitializedRepo(name: String, path: Path) extends Repo
 
-object GitTestHelpers extends OsProcess{
-
-
+object GitTestHelpers extends OsProcess {
 
   implicit class StringToInitializedRepoImplicit(repoName: String) {
 
-    def initRepo(directory: Path) = {
+    def initRepo(directory: Path): InitializedRepo = {
       println("directory path: " + directory.toString)
-      run(s"git init $repoName", directory).right.map(x => InitializedRepo(repoName, directory.resolve(repoName))).right.get
+      run(s"git init $repoName", directory).right
+        .map(x => InitializedRepo(repoName, directory.resolve(repoName)))
+        .right
+        .get
     }
-
   }
 
   implicit class InitilizedRepoImplicit(repo: InitializedRepo) {
 
-    def commitFiles(filePaths: String*) = {
-      filePaths.foreach { filePath => createFilesWithContent(filePath, "some content") }
+    def commitFiles(filePaths: String*): Either[Failure, InitializedRepo] = {
+      filePaths.foreach { filePath =>
+        createFilesWithContent(filePath, "some content")
+      }
 
-      run(s"git add .", repo.path).right.map { _ =>
-
-        run(
-          Array(
-            "git",
-            "commit",
-            "-m", "some commit message"
-          ), repo.path).right.map(_ => repo)
-      }.right get
-
+      run(s"git add .", repo.path).right
+        .map { _ =>
+          run(
+            Array(
+              "git",
+              "commit",
+              "-m",
+              "some commit message"
+            ),
+            repo.path).right.map(_ => repo)
+        }
+        .right get
     }
 
-    def createAnnotatedTag(tagName: String, message: String) = {
+    def createAnnotatedTag(tagName: String, message: String): InitializedRepo =
       run(
         Array(
           "git",
           "tag",
           "-a",
-          tagName, "-m", message
-        ), repo.path).right.map(_ => repo).right get
-    }
+          tagName,
+          "-m",
+          message
+        ),
+        repo.path).right.map(_ => repo).right get
 
-    def createTag(tagName: String) = {
+    def createTag(tagName: String): InitializedRepo =
       run(
         Array(
           "git",
           "tag",
           tagName
-        ), repo.path).right.map(_ => repo).right get
-    }
-
+        ),
+        repo.path).right.map(_ => repo).right get
 
     private def createFilesWithContent(filePath: String, content: String): Path = {
       val target: Path = repo.path.resolve(filePath)
@@ -86,9 +87,5 @@ object GitTestHelpers extends OsProcess{
 
       Files.write(target, "content".getBytes("UTF-8"))
     }
-
-
   }
-
-
 }
